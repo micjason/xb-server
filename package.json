@@ -1,16 +1,19 @@
 {
   "name": "xb-blog-server",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "个人博客系统 - 从零开始",
+  "main": "app.js",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
-    "jade": "~1.11.0",
-    "morgan": "~1.9.1"
+    "express": "^4.18.2",
+    "mongoose": "^6.10.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
   }
 }
