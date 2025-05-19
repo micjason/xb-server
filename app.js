@@ -19,6 +19,10 @@ app.use('/api/users', usersRouter);
 const rolesRouter = require('./routes/roles');
 app.use('/api/roles', rolesRouter);
 
+// 挂载权限路由
+const permissionsRouter = require('./routes/permissions');
+app.use('/api/permissions', permissionsRouter);
+
 // 数据库连接
 const Role = require('./models/role');
 async function ensureSuperAdminRole() {
