@@ -11,6 +11,10 @@ const MONGODB_URI = process.env.MONGODB_URI;
 app.use(cors());
 app.use(express.json());
 
+// 挂载登录认证路由
+const authRouter = require('./routes/auth');
+app.use('/api/auth', authRouter);
+
 // 挂载用户路由
 const usersRouter = require('./routes/users');
 app.use('/api/users', usersRouter);
