@@ -27,6 +27,10 @@ app.use('/api/permissions', permissionsRouter);
 const resourcesRouter = require('./routes/resources');
 app.use('/api/resources', resourcesRouter);
 
+// 挂载用户操作日志路由
+const usersOptLogsRouter = require('./routes/users_opt_logs');
+app.use('/api/users_opt_logs', usersOptLogsRouter);
+
 // 数据库连接
 const Role = require('./models/role');
 async function ensureSuperAdminRole() {
