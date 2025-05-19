@@ -15,19 +15,43 @@ app.use(express.json());
 const usersRouter = require('./routes/users');
 app.use('/api/users', usersRouter);
 
+// 挂载角色路由
+const rolesRouter = require('./routes/roles');
+app.use('/api/roles', rolesRouter);
+
 // 数据库连接
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('MongoDB 连接成功');
-}).catch((err) => {
-  console.error('MongoDB 连接失败:', err);
-});
+const Role = require('./models/role');
+async function ensureSuperAdminRole() {
+  const superAdmin = await Role.findOne({ name: 'superadmin' });
+  if (!superAdmin) {
+    await Role.create({
+      name: 'superadmin',
+      description: '系统默认超级管理员',
+      permissions: ['*'],
+      isSystem: true
+    });
+    console.log('已自动创建超级管理员角色');
+  }
+}
+
+mongoose.connect(MONGODB_URI)
+  .then(async () => {
+    console.log('MongoDB 连接成功');
+    await ensureSuperAdminRole();
+  }).catch((err) => {
+    console.error('MongoDB 连接失败:', err);
+  });
 
 // 路由占位
 app.get('/', (req, res) => {
   res.send('Mall Server API 正常运行');
+});
+
+app.post('/test-json', (req, res) => {
+  console.log('收到的请求体:', req.body);
+  res.json({
+    received: req.body
+  });
 });
 
 // 启动服务
