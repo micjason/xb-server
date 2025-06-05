@@ -1,4 +1,5 @@
 const UsersOptLogs = require('../models/usersOptLogs');
+const { success, error, notFound, badRequest, serverError } = require('../utils/response');
 
 // 创建日志
 exports.createLog = async (req, res) => {
@@ -6,9 +7,9 @@ exports.createLog = async (req, res) => {
     const { userId, operation, target, detail, ip } = req.body;
     const log = new UsersOptLogs({ userId, operation, target, detail, ip });
     await log.save();
-    res.status(201).json(log);
+    return success(res, log, '创建日志成功', 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -16,9 +17,9 @@ exports.createLog = async (req, res) => {
 exports.getLogs = async (req, res) => {
   try {
     const logs = await UsersOptLogs.find().populate('userId', 'username nickname');
-    res.json(logs);
+    return success(res, logs, '获取日志列表成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '获取日志列表失败');
   }
 };
 
@@ -27,10 +28,10 @@ exports.deleteLog = async (req, res) => {
   try {
     const { id } = req.params;
     const log = await UsersOptLogs.findById(id);
-    if (!log) return res.status(404).json({ error: '日志不存在' });
+    if (!log) return notFound(res, '日志不存在');
     await log.deleteOne();
-    res.json({ message: '日志已删除' });
+    return success(res, null, '日志删除成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '删除日志失败');
   }
 }; 

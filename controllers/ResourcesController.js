@@ -1,4 +1,5 @@
 const Resources = require('../models/resources');
+const { success, error, notFound, badRequest, serverError } = require('../utils/response');
 
 // 创建资源
 exports.createResource = async (req, res) => {
@@ -6,9 +7,9 @@ exports.createResource = async (req, res) => {
     const { name, type, url, description } = req.body;
     const resource = new Resources({ name, type, url, description });
     await resource.save();
-    res.status(201).json(resource);
+    return success(res, resource, '创建资源成功', 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -16,9 +17,9 @@ exports.createResource = async (req, res) => {
 exports.getResources = async (req, res) => {
   try {
     const resources = await Resources.find();
-    res.json(resources);
+    return success(res, resources, '获取资源列表成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '获取资源列表失败');
   }
 };
 
@@ -32,10 +33,10 @@ exports.updateResource = async (req, res) => {
       { name, type, url, description },
       { new: true }
     );
-    if (!resource) return res.status(404).json({ error: '资源不存在' });
-    res.json(resource);
+    if (!resource) return notFound(res, '资源不存在');
+    return success(res, resource, '更新资源成功');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -44,10 +45,10 @@ exports.deleteResource = async (req, res) => {
   try {
     const { id } = req.params;
     const resource = await Resources.findById(id);
-    if (!resource) return res.status(404).json({ error: '资源不存在' });
+    if (!resource) return notFound(res, '资源不存在');
     await resource.deleteOne();
-    res.json({ message: '资源已删除' });
+    return success(res, null, '资源删除成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '删除资源失败');
   }
 }; 

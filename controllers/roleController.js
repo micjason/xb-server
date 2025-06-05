@@ -1,4 +1,5 @@
 const Role = require('../models/role');
+const { success, error, notFound, badRequest, serverError, forbidden } = require('../utils/response');
 
 // 创建角色
 exports.createRole = async (req, res) => {
@@ -6,9 +7,9 @@ exports.createRole = async (req, res) => {
     const { name, description, permissions } = req.body;
     const role = new Role({ name, description, permissions });
     await role.save();
-    res.status(201).json(role);
+    return success(res, role, '创建角色成功', 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -16,9 +17,9 @@ exports.createRole = async (req, res) => {
 exports.getRoles = async (req, res) => {
   try {
     const roles = await Role.find();
-    res.json(roles);
+    return success(res, roles, '获取角色列表成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '获取角色列表失败');
   }
 };
 
@@ -32,10 +33,10 @@ exports.updateRole = async (req, res) => {
       { name, description, permissions },
       { new: true }
     );
-    if (!role) return res.status(404).json({ error: '角色不存在' });
-    res.json(role);
+    if (!role) return notFound(res, '角色不存在');
+    return success(res, role, '更新角色成功');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -44,11 +45,11 @@ exports.deleteRole = async (req, res) => {
   try {
     const { id } = req.params;
     const role = await Role.findById(id);
-    if (!role) return res.status(404).json({ error: '角色不存在' });
-    if (role.isSystem) return res.status(403).json({ error: '系统内置角色不可删除' });
+    if (!role) return notFound(res, '角色不存在');
+    if (role.isSystem) return forbidden(res, '系统内置角色不可删除');
     await role.deleteOne();
-    res.json({ message: '角色已删除' });
+    return success(res, null, '角色删除成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '删除角色失败');
   }
 }; 

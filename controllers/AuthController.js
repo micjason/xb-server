@@ -12,9 +12,39 @@ exports.login = async (req, res) => {
     // 这里只做明文比对，实际项目应加密比对
     if (user.password !== password) return res.status(401).json({ error: '密码错误' });
     const token = jwt.sign({ userId: user._id, username: user.username, role: user.role }, SECRET, { expiresIn: '2h' });
-    res.json({ token, user: { username: user.username, nickname: user.nickname, role: user.role } });
+    
+    // 根据角色设置权限
+    const permissions = user.role === 'admin' ? ['*'] : ['read'];
+    const roles = [user.role]; // 转换为数组格式
+    
+    // 返回符合前端期望的数据格式
+    res.json({ 
+      code: 200,
+      message: '登录成功',
+      success: true,
+      data: {
+        token, 
+        user: { 
+          id: user._id,
+          username: user.username, 
+          nickname: user.nickname, 
+          email: user.email || '',
+          phone: user.phone || '',
+          avatar: user.avatar || '',
+          status: user.status || 1,
+          createTime: user.createdAt || new Date().toISOString(),
+          updateTime: user.updatedAt || new Date().toISOString()
+        },
+        permissions,
+        roles
+      }
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      code: 500,
+      message: err.message,
+      success: false 
+    });
   }
 };
 

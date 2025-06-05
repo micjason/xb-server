@@ -1,4 +1,5 @@
 const Permissions = require('../models/permissions');
+const { success, error, notFound, badRequest, serverError } = require('../utils/response');
 
 // 创建权限
 exports.createPermission = async (req, res) => {
@@ -6,9 +7,9 @@ exports.createPermission = async (req, res) => {
     const { name, code, description } = req.body;
     const permission = new Permissions({ name, code, description });
     await permission.save();
-    res.status(201).json(permission);
+    return success(res, permission, '创建权限成功', 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -16,9 +17,9 @@ exports.createPermission = async (req, res) => {
 exports.getPermissions = async (req, res) => {
   try {
     const permissions = await Permissions.find();
-    res.json(permissions);
+    return success(res, permissions, '获取权限列表成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '获取权限列表失败');
   }
 };
 
@@ -32,10 +33,10 @@ exports.updatePermission = async (req, res) => {
       { name, code, description },
       { new: true }
     );
-    if (!permission) return res.status(404).json({ error: '权限不存在' });
-    res.json(permission);
+    if (!permission) return notFound(res, '权限不存在');
+    return success(res, permission, '更新权限成功');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return badRequest(res, err.message);
   }
 };
 
@@ -44,10 +45,10 @@ exports.deletePermission = async (req, res) => {
   try {
     const { id } = req.params;
     const permission = await Permissions.findById(id);
-    if (!permission) return res.status(404).json({ error: '权限不存在' });
+    if (!permission) return notFound(res, '权限不存在');
     await permission.deleteOne();
-    res.json({ message: '权限已删除' });
+    return success(res, null, '权限删除成功');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return serverError(res, '删除权限失败');
   }
 }; 
