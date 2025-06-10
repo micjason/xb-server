@@ -1,13 +1,25 @@
 const Role = require('../models/role');
 const { success, error, notFound, badRequest, serverError, forbidden } = require('../utils/response');
 
+// 转换MongoDB文档为前端格式
+const transformRole = (role) => {
+  if (!role) return null;
+  const roleObj = role.toObject ? role.toObject() : role;
+  const { _id, __v, ...rest } = roleObj;
+  return {
+    id: _id,
+    ...rest
+  };
+};
+
 // 创建角色
 exports.createRole = async (req, res) => {
   try {
     const { name, description, permissions } = req.body;
     const role = new Role({ name, description, permissions });
     await role.save();
-    return success(res, role, '创建角色成功', 201);
+    const transformedRole = transformRole(role);
+    return success(res, transformedRole, '创建角色成功', 201);
   } catch (err) {
     return badRequest(res, err.message);
   }
@@ -17,7 +29,8 @@ exports.createRole = async (req, res) => {
 exports.getRoles = async (req, res) => {
   try {
     const roles = await Role.find();
-    return success(res, roles, '获取角色列表成功');
+    const transformedRoles = roles.map(transformRole);
+    return success(res, transformedRoles, '获取角色列表成功');
   } catch (err) {
     return serverError(res, '获取角色列表失败');
   }
@@ -34,7 +47,8 @@ exports.updateRole = async (req, res) => {
       { new: true }
     );
     if (!role) return notFound(res, '角色不存在');
-    return success(res, role, '更新角色成功');
+    const transformedRole = transformRole(role);
+    return success(res, transformedRole, '更新角色成功');
   } catch (err) {
     return badRequest(res, err.message);
   }

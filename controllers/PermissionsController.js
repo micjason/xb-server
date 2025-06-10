@@ -1,13 +1,25 @@
 const Permissions = require('../models/permissions');
 const { success, error, notFound, badRequest, serverError } = require('../utils/response');
 
+// 转换MongoDB文档为前端格式
+const transformPermission = (permission) => {
+  if (!permission) return null;
+  const permissionObj = permission.toObject ? permission.toObject() : permission;
+  const { _id, __v, ...rest } = permissionObj;
+  return {
+    id: _id,
+    ...rest
+  };
+};
+
 // 创建权限
 exports.createPermission = async (req, res) => {
   try {
     const { name, code, description } = req.body;
     const permission = new Permissions({ name, code, description });
     await permission.save();
-    return success(res, permission, '创建权限成功', 201);
+    const transformedPermission = transformPermission(permission);
+    return success(res, transformedPermission, '创建权限成功', 201);
   } catch (err) {
     return badRequest(res, err.message);
   }
@@ -17,7 +29,8 @@ exports.createPermission = async (req, res) => {
 exports.getPermissions = async (req, res) => {
   try {
     const permissions = await Permissions.find();
-    return success(res, permissions, '获取权限列表成功');
+    const transformedPermissions = permissions.map(transformPermission);
+    return success(res, transformedPermissions, '获取权限列表成功');
   } catch (err) {
     return serverError(res, '获取权限列表失败');
   }
@@ -34,7 +47,8 @@ exports.updatePermission = async (req, res) => {
       { new: true }
     );
     if (!permission) return notFound(res, '权限不存在');
-    return success(res, permission, '更新权限成功');
+    const transformedPermission = transformPermission(permission);
+    return success(res, transformedPermission, '更新权限成功');
   } catch (err) {
     return badRequest(res, err.message);
   }

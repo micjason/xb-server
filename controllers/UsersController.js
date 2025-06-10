@@ -2,6 +2,17 @@ const UsersModel = require('../models/UsersModel');
 const mongoose = require('mongoose');
 const { success, error, successWithPagination, notFound, badRequest, serverError } = require('../utils/response');
 
+// 转换MongoDB文档为前端格式
+const transformUser = (user) => {
+  if (!user) return null;
+  const userObj = user.toObject ? user.toObject() : user;
+  const { _id, __v, ...rest } = userObj;
+  return {
+    id: _id,
+    ...rest
+  };
+};
+
 // 获取管理员列表
 exports.list = async (req, res) => {
   try {
@@ -14,7 +25,10 @@ exports.list = async (req, res) => {
       .skip((page - 1) * pageSize)
       .limit(Number(pageSize))
       .sort({ createdAt: -1 });
-    return successWithPagination(res, users, total, '获取管理员列表成功');
+    
+    // 转换数据格式
+    const transformedUsers = users.map(transformUser);
+    return successWithPagination(res, transformedUsers, total, '获取管理员列表成功');
   } catch (err) {
     return serverError(res, '获取管理员列表失败');
   }
@@ -32,7 +46,8 @@ exports.create = async (req, res) => {
       return badRequest(res, '用户名已存在');
     }
     const user = await UsersModel.create({ username, nickname, password, avatar, role });
-    return success(res, user, '创建管理员成功');
+    const transformedUser = transformUser(user);
+    return success(res, transformedUser, '创建管理员成功');
   } catch (err) {
     return serverError(res, '创建管理员失败');
   }
@@ -66,7 +81,8 @@ exports.update = async (req, res) => {
     if (!user) {
       return notFound(res, '管理员不存在');
     }
-    return success(res, user, '更新管理员成功');
+    const transformedUser = transformUser(user);
+    return success(res, transformedUser, '更新管理员成功');
   } catch (err) {
     return serverError(res, '更新管理员失败');
   }
@@ -83,7 +99,8 @@ exports.findOne = async (req, res) => {
     if (!user) {
       return notFound(res, '管理员不存在');
     }
-    return success(res, user, '获取管理员信息成功');
+    const transformedUser = transformUser(user);
+    return success(res, transformedUser, '获取管理员信息成功');
   } catch (err) {
     return serverError(res, '获取管理员信息失败');
   }
