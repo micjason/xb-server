@@ -4,6 +4,25 @@ const { success, error: responseError, badRequest, serverError, forbidden } = re
 
 const SECRET = process.env.JWT_SECRET || 'mall-secret';
 
+// 定义系统权限常量
+const ADMIN_PERMISSIONS = [
+  '*', // 超级权限标识
+  // 系统管理权限
+  'system:role:view', 'system:role:create', 'system:role:edit', 'system:role:delete', 'system:role:export', 'system:role:permission', 'system:role:status',
+  'system:admin:view', 'system:admin:create', 'system:admin:edit', 'system:admin:delete', 'system:admin:export', 'system:admin:password', 'system:admin:role',
+  'system:permission:view', 'system:permission:create', 'system:permission:edit', 'system:permission:delete', 'system:permission:export',
+  'system:resource:view', 'system:resource:create', 'system:resource:edit', 'system:resource:delete', 'system:resource:upload',
+  'system:log:view', 'system:log:export', 'system:log:delete',
+  // 商品管理权限
+  'product:category:view', 'product:category:create', 'product:category:edit', 'product:category:delete',
+  'product:goods:view', 'product:goods:create', 'product:goods:edit', 'product:goods:delete'
+];
+
+const USER_PERMISSIONS = [
+  'dashboard:view',
+  'profile:view', 'profile:edit'
+];
+
 // 登录，生成token
 exports.login = async (req, res) => {
   try {
@@ -15,7 +34,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ userId: user._id, username: user.username, role: user.role }, SECRET, { expiresIn: '2h' });
     
     // 根据角色设置权限
-    const permissions = user.role === 'admin' ? ['*'] : ['read'];
+    const permissions = user.role === 'admin' ? ADMIN_PERMISSIONS : USER_PERMISSIONS;
     const roles = [user.role]; // 转换为数组格式
     
     // 返回符合前端期望的数据格式
@@ -75,7 +94,7 @@ exports.getUserPermissions = async (req, res) => {
     }
     
     // 根据角色返回权限
-    const permissions = user.role === 'admin' ? ['*'] : ['read'];
+    const permissions = user.role === 'admin' ? ADMIN_PERMISSIONS : USER_PERMISSIONS;
     
     return success(res, permissions, '获取用户权限成功');
   } catch (err) {
