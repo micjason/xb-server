@@ -33,20 +33,22 @@ const upload = multer({
   }
 });
 
-// 所有路由都需要认证
-router.use(auth);
-
-// Excel导入导出路由（必须放在/:id路由之前）
-router.get('/import-template', productController.downloadImportTemplate);      // 下载Excel导入模板
-router.post('/import', upload.single('file'), productController.importProducts); // 批量导入商品
-
-// 基础CRUD路由
-router.post('/', productController.createProduct);                        // 创建商品
+// 公开的查询路由（不需要认证）
 router.get('/', productController.getProducts);                          // 获取商品列表（分页、搜索、筛选）
 router.get('/top-selling', productController.getTopSellingProducts);     // 获取热销商品
 router.get('/new-products', productController.getNewProducts);           // 获取新品推荐
 router.get('/:id', productController.getProductById);                    // 获取商品详情
 router.get('/:id/related', productController.getRelatedProducts);        // 获取相关商品推荐
+
+// 管理操作路由（需要认证）
+router.use(auth); // 从这里开始所有路由都需要认证
+
+// Excel导入导出路由（必须放在/:id路由之前）
+router.get('/import-template', productController.downloadImportTemplate);      // 下载Excel导入模板
+router.post('/import', upload.single('file'), productController.importProducts); // 批量导入商品
+
+// CRUD管理路由
+router.post('/', productController.createProduct);                        // 创建商品
 router.put('/:id', productController.updateProduct);                     // 更新商品
 router.patch('/:id/status', productController.updateProductStatus);      // 更新商品状态
 router.patch('/:id/stock', productController.updateProductStock);        // 更新商品库存
