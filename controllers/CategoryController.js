@@ -173,9 +173,7 @@ exports.getCategories = async (req, res) => {
     // 返回分页格式的数据
     const responseData = {
       list: transformedCategories,
-      total: total,
-      page: pageNum,
-      size: pageSize
+      total: total
     };
 
     return success(res, responseData, '获取分类列表成功');
