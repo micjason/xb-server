@@ -5,6 +5,9 @@ const AuthController = require('../controllers/AuthController');
 // 登录
 router.post('/login', AuthController.login);
 
+// 用户注册
+router.post('/register', AuthController.register);
+
 // 退出登录
 router.post('/logout', AuthController.verifyToken, AuthController.logout);
 

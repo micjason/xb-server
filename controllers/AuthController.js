@@ -1,8 +1,10 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const Users = require('../models/UsersModel');
 const { success, error: responseError, badRequest, serverError, forbidden } = require('../utils/response');
 
 const SECRET = process.env.JWT_SECRET || 'mall-secret';
+const SALT_ROUNDS = 12; // bcrypt 盐值轮数
 
 // 定义系统权限常量
 const ADMIN_PERMISSIONS = [
@@ -23,14 +25,78 @@ const USER_PERMISSIONS = [
   'profile:view', 'profile:edit'
 ];
 
+// 用户注册
+exports.register = async (req, res) => {
+  try {
+    const { username, password, confirmPassword } = req.body;
+    
+    // 参数验证
+    if (!username || !password || !confirmPassword) {
+      return badRequest(res, '请填写完整的注册信息');
+    }
+    
+    // 用户名格式验证
+    if (username.length < 3 || username.length > 20) {
+      return badRequest(res, '用户名长度为3-20个字符');
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return badRequest(res, '用户名只能包含字母、数字和下划线');
+    }
+    
+    // 密码强度验证
+    if (password.length < 6 || password.length > 20) {
+      return badRequest(res, '密码长度为6-20个字符');
+    }
+    
+    // 确认密码验证
+    if (password !== confirmPassword) {
+      return badRequest(res, '两次输入的密码不一致');
+    }
+    
+    // 检查用户名是否已存在
+    const existingUser = await Users.findOne({ username });
+    if (existingUser) {
+      return badRequest(res, '用户名已存在');
+    }
+    
+    // 加密密码
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    
+    // 创建用户，设置默认昵称为用户名，默认角色为用户
+    const newUser = await Users.create({
+      username,
+      nickname: username, // 默认昵称为用户名
+      password: hashedPassword,
+      role: 'user' // 默认角色为普通用户
+    });
+    
+    // 返回成功响应（不包含敏感信息）
+    return success(res, {
+      id: newUser._id,
+      username: newUser.username,
+      nickname: newUser.nickname,
+      role: newUser.role,
+      createTime: newUser.createdAt
+    }, '注册成功');
+    
+  } catch (err) {
+    console.error('注册失败:', err);
+    return serverError(res, '注册失败');
+  }
+};
+
 // 登录，生成token
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await Users.findOne({ username });
     if (!user) return responseError(res, '用户不存在', 401);
-    // 这里只做明文比对，实际项目应加密比对
-    if (user.password !== password) return responseError(res, '密码错误', 401);
+    
+    // 使用bcrypt比对密码
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return responseError(res, '密码错误', 401);
+    
     const token = jwt.sign({ userId: user._id, username: user.username, role: user.role }, SECRET, { expiresIn: '2h' });
     
     // 根据角色设置权限
@@ -56,6 +122,7 @@ exports.login = async (req, res) => {
       roles
     }, '登录成功');
   } catch (err) {
+    console.error('登录失败:', err);
     return serverError(res, '登录失败');
   }
 };
@@ -156,19 +223,24 @@ exports.changePassword = async (req, res) => {
       return responseError(res, '用户不存在', 404);
     }
     
-    // 验证旧密码
-    if (user.password !== oldPassword) {
+    // 使用bcrypt验证旧密码
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isOldPasswordValid) {
       return responseError(res, '旧密码错误', 400);
     }
     
+    // 加密新密码
+    const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    
     // 更新密码
     await Users.findByIdAndUpdate(req.user.userId, { 
-      password: newPassword,
+      password: hashedNewPassword,
       updatedAt: new Date()
     });
     
     return success(res, null, '密码修改成功');
   } catch (err) {
+    console.error('密码修改失败:', err);
     return serverError(res, '密码修改失败');
   }
 };
